@@ -18,3 +18,7 @@ typechain-types/
 
 # Vercel
 .vercel
+
+# Next.js build output
+frontend/.next/
+frontend/out/

@@ -20,6 +20,52 @@ frontend as clearly-labeled reference data.
 | Explorer | `https://explorer.testnet.chain.robinhood.com` |
 | Faucet | `https://faucet.testnet.chain.robinhood.com` |
 
+## Deployment record (live on testnet)
+
+All values below were produced by the CI deploy pipeline
+(`.github/workflows/deploy.yml`, run history in the Actions tab) and
+independently re-verified against the RPC + explorer. The machine-readable
+record lives in [`deployments/testnet.json`](deployments/testnet.json).
+
+| Artifact | Value |
+|---|---|
+| Contract | [`0xdFB8775FF189254bCa8E328bea60d261DDF01F4f`](https://explorer.testnet.chain.robinhood.com/address/0xdFB8775FF189254bCa8E328bea60d261DDF01F4f) — verified source |
+| Deploy tx | [`0xd3c715a1b9e04c1e67cf184a7fa7a3139720f6b104cfeceb588a29e8f3d80de8`](https://explorer.testnet.chain.robinhood.com/tx/0xd3c715a1b9e04c1e67cf184a7fa7a3139720f6b104cfeceb588a29e8f3d80de8) (block 124774758) |
+| `setComponents` tx | [`0xb914c62769426643ad76e57fd7f95ec83855d04f1cd8765b475a22bd0adf1f7d`](https://explorer.testnet.chain.robinhood.com/tx/0xb914c62769426643ad76e57fd7f95ec83855d04f1cd8765b475a22bd0adf1f7d) |
+| `transferOwnership` tx | [`0xcabbd4b2535524dd42d375a956ab6963a178fd3953cea509f031088232e3a4cf`](https://explorer.testnet.chain.robinhood.com/tx/0xcabbd4b2535524dd42d375a956ab6963a178fd3953cea509f031088232e3a4cf) |
+| Owner (on-chain `owner()`) | `0xd57bC3482F32acFD5B52efb723288376aE1b2Fd2` (main wallet; burner retains no privileges) |
+
+Component tokens are the faucet-confirmed testnet Stock Tokens (18 decimals):
+TSLA `0xC9f9c86933092BbbfFF3CCb4b105A4A94bf3Bd4E` (40%), AMZN
+`0x5884aD2f920c162CFBbACc88C9C51AA75eC09E02` (35%), NFLX
+`0x3b8262A63d25f0477c4DDE23F83cfe22Cb768C93` (25%). The testnet also contains
+same-ticker counterfeit tokens — a matching ticker does **not** identify a
+Robinhood Stock Token; these addresses were confirmed from the faucet
+contract's on-chain distributions.
+
+## Frontend
+
+`frontend/` is a fresh Next.js 16 + wagmi v2 + viem app (Tailwind CSS 4).
+Every balance, weight, supply and quote is read live from the chain
+(Multicall3-batched); the only static numbers are the clearly-labeled
+illustrative reference prices. The basket address is resolved from
+`NEXT_PUBLIC_BASKET_ADDRESS` or the bundled `deployments/testnet.json`
+snapshot (synced at build time).
+
+```bash
+cd frontend
+npm install
+npm run dev    # http://localhost:3000
+```
+
+## Local development (contract)
+
+```bash
+npm install
+npx hardhat test          # 25 tests: setComponents / mint / redeem / reentrancy
+npx hardhat compile
+```
+
 ## Setup
 
 ```bash
