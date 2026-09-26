@@ -4,7 +4,13 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+// PHASE 1 BUILD FIX (documented): original import was
+// "@openzeppelin/contracts/security/ReentrancyGuard.sol" — the OpenZeppelin
+// v4 path. The rest of the contract uses the OpenZeppelin v5 API
+// (`Ownable(msg.sender)` constructor argument), and in v5 ReentrancyGuard
+// moved to utils/. With OZ v5 the security/ path does not exist and the
+// contract did not compile. Only the import path changed; no logic touched.
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title IndexBasket
