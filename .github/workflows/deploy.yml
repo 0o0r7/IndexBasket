@@ -1,0 +1,83 @@
+name: Deploy IndexBasket to Robinhood Testnet
+
+# Deploys IndexBasket, sets faucet-confirmed components, transfers ownership
+# to the main wallet, and verifies the source on the official Blockscout
+# explorer. Secrets (BURNWALLET_PK, MAINWALLET_ADD) are GitHub repo secrets —
+# they are only ever exposed to this workflow's runner as environment
+# variables and are never printed, stored, or committed.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Compile
+        run: npx hardhat compile
+
+      - name: Run unit tests
+        run: npx hardhat test
+
+      - name: Deploy + setComponents + transferOwnership
+        env:
+          BURNWALLET_PK: ${{ secrets.BURNWALLET_PK }}
+          MAINWALLET_ADD: ${{ secrets.MAINWALLET_ADD }}
+        run: npx hardhat run scripts/deploy.js --network robinhoodTestnet
+
+      - name: Verify contract source on Blockscout explorer
+        run: |
+          ADDRESS=$(cat deployments/address.txt | tr -d '[:space:]')
+          echo "Verifying $ADDRESS"
+          for i in 1 2 3; do
+            if npx hardhat verify --network robinhoodTestnet "$ADDRESS" --constructor-args scripts/verify-args.js; then
+              echo "VERIFY_OK=true"
+              exit 0
+            fi
+            echo "verify attempt $i failed — retrying after index delay"
+            sleep 25
+          done
+          echo "VERIFY_OK=false"
+          exit 1
+
+      - name: Mark verified in deployment record
+        if: success()
+        run: |
+          node -e "
+            const fs=require('fs');
+            const p='deployments/testnet.json';
+            const j=JSON.parse(fs.readFileSync(p,'utf8'));
+            j.verified=true;
+            fs.writeFileSync(p, JSON.stringify(j,null,2)+'\n');
+          "
+
+      - name: Commit deployment record
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add deployments/
+          git commit -m "deploy: record Robinhood testnet deployment (real tx hashes from this run)" || echo "nothing to commit"
+          git push
+
+      - name: Upload deployment artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployments
+          path: deployments/
