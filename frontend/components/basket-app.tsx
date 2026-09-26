@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAccount, useBalance } from "wagmi";
 import { Activity, AlertTriangle, ExternalLink, Info, TrendingUp } from "lucide-react";
 import { BASKET_ADDRESS, fmtToken, fmtUsd, referencePrice, WAD } from "@/lib/contract";
@@ -14,6 +14,13 @@ import { WalletButton } from "./wallet-button";
 
 export function BasketApp() {
   const [activity, setActivity] = useState<ActivityEntry[]>([]);
+  // Wallet state (localStorage + injected provider) resolves asynchronously and
+  // can mutate BEFORE hydration finishes for previously-authorized sessions,
+  // which would make client text (e.g. CTA label) mismatch server HTML
+  // (React #418). Render a stable shell until mounted — standard
+  // Next.js + wagmi SSR pattern.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const { address, chain, isConnected } = useAccount();
   const wrongChain = isConnected && chain?.id !== CHAIN_ID;
   const wallet = useWallet();
@@ -50,6 +57,14 @@ export function BasketApp() {
   );
   const refYourValue =
     meta.yourShares !== null ? (Number(meta.yourShares) / Number(WAD)) * refSharePrice : null;
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" aria-hidden="true">
+        <div className="w-8 h-8 rounded-full border-2 border-emerald-400/30 border-t-emerald-400 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">

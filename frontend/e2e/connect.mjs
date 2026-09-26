@@ -69,11 +69,13 @@ function fail(msg) {
 const browser = await chromium.launch();
 const pageErrors = [];
 
-async function newPage(eager) {
+async function newPage(eager, label) {
   const ctx = await browser.newContext();
   await ctx.addInitScript(mockInit({ eager }));
   const page = await ctx.newPage();
-  page.on("pageerror", (e) => pageErrors.push(String(e).slice(0, 160)));
+  page.on("pageerror", (e) =>
+    pageErrors.push(`[${label}] ${String(e).slice(0, 220)}`)
+  );
   return { ctx, page };
 }
 
@@ -81,7 +83,7 @@ try {
   // --------------------------------------------------------------- Scenario A
   console.log("— Scenario A: first-time visitor (silent eth_accounts empty) —");
   {
-    const { ctx, page } = await newPage(false);
+    const { ctx, page } = await newPage(false, "A");
     await page.goto(BASE, { waitUntil: "domcontentloaded", timeout: 45_000 });
 
     const headerBtn = page
@@ -118,7 +120,7 @@ try {
   // --------------------------------------------------------------- Scenario B
   console.log("— Scenario B: returning authorized session (eager eth_accounts) —");
   {
-    const { ctx, page } = await newPage(true);
+    const { ctx, page } = await newPage(true, "B");
     await page.goto(BASE, { waitUntil: "domcontentloaded", timeout: 45_000 });
 
     await page.getByText("1111…1111", { exact: false }).first().waitFor({ timeout: 20_000 });
@@ -141,7 +143,7 @@ try {
   // ------------------------------------------------------------------- /health
   console.log("— /health diagnostics page —");
   {
-    const { ctx, page } = await newPage(true);
+    const { ctx, page } = await newPage(true, "health");
     await page.goto(`${BASE}/health`, { waitUntil: "domcontentloaded", timeout: 45_000 });
     await page.getByText("Injected wallet detection").waitFor({ timeout: 20_000 });
     await page
@@ -162,11 +164,16 @@ try {
     await ctx.close();
   }
 
+  console.log(
+    `page errors captured: ${
+      pageErrors.length ? JSON.stringify(pageErrors, null, 1) : "NONE"
+    }`
+  );
   const realErrors = pageErrors.filter((e) => !/Minified React error #418/.test(e));
   if (realErrors.length > 0) fail(`page errors: ${realErrors.slice(0, 3).join(" | ")}`);
   console.log(
     `\nE2E CONNECT FLOW: ALL SCENARIOS PASSED (simulated EIP-1193 provider; ${
-      pageErrors.length ? "hydration #418 suppressed by mounted-gate check" : "zero page errors"
+      pageErrors.length ? "see page errors above" : "zero page errors"
     })`
   );
 } catch (e) {
