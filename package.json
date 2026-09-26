@@ -1,8 +1,30 @@
 {
   "name": "index-basket",
   "version": "1.0.0",
+  "private": true,
   "description": "Minimal index basket over real Robinhood Chain testnet faucet Stock Tokens (TSLA/AMZN/NFLX). Deposit-to-mint, burn-to-redeem. No price feed on-chain.",
   "license": "MIT",
+  "keywords": [
+    "solidity",
+    "hardhat",
+    "erc20",
+    "index-fund",
+    "robinhood-chain",
+    "testnet",
+    "openzeppelin",
+    "web3"
+  ],
+  "homepage": "https://builder-trio-index.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0o0r7/IndexBasket.git"
+  },
+  "bugs": {
+    "url": "https://github.com/0o0r7/IndexBasket/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "test": "hardhat test",
     "compile": "hardhat compile",

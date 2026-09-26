@@ -3,13 +3,27 @@
   "version": "1.0.0",
   "private": true,
   "description": "Builder Trio Index — modern UI for the IndexBasket contract on Robinhood Chain Testnet (Next.js + wagmi + viem)",
+  "license": "MIT",
+  "homepage": "https://builder-trio-index.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0o0r7/IndexBasket.git",
+    "directory": "frontend"
+  },
+  "bugs": {
+    "url": "https://github.com/0o0r7/IndexBasket/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "predev": "node scripts/sync-deployments.mjs",
     "dev": "next dev",
     "prebuild": "node scripts/sync-deployments.mjs",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "healthcheck": "node scripts/healthcheck.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.59.0",
