@@ -15,6 +15,10 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # Credentials live in the GitHub Environment "Burn_Wallet_PK":
+    #   secret   BURNWALLET_PK  (mapped below via secrets.*)
+    #   variable MAINWALLET_ADD (auto-injected as env var)
+    environment: Burn_Wallet_PK
     steps:
       - name: Checkout
         uses: actions/checkout@v4
