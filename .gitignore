@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# Build artifacts
+artifacts/
+cache/
+coverage/
+coverage.json
+typechain-types/
+
+# Environment — NEVER commit .env (burner private key lives here in Phase 2+)
+.env
+.env.local
+
+# OS / editor
+.DS_Store
+*.log
+
+# Vercel
+.vercel

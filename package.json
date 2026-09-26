@@ -1,0 +1,19 @@
+{
+  "name": "index-basket",
+  "version": "1.0.0",
+  "description": "Minimal index basket over real Robinhood Chain testnet faucet Stock Tokens (TSLA/AMZN/NFLX). Deposit-to-mint, burn-to-redeem. No price feed on-chain.",
+  "license": "MIT",
+  "scripts": {
+    "test": "hardhat test",
+    "compile": "hardhat compile",
+    "deploy:testnet": "hardhat run scripts/deploy.js --network robinhoodTestnet"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.26.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.2"
+  }
+}

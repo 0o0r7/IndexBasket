@@ -1,8 +1,9 @@
-const { task } = require("hardhat/config");
-require("@nomiclabs/hardhat-ethers");
-require("hardhat-deploy");
-require("@nomiclabs/hardhat-waffle");
+require("@nomicfoundation/hardhat-toolbox");
+require("dotenv").config();
 
+// Network parameters per https://docs.robinhood.com/chain/deploy-smart-contracts
+// (testnet column). Verification goes through the Blockscout API on the
+// official testnet explorer.
 module.exports = {
   solidity: "0.8.20",
   paths: {
@@ -13,10 +14,25 @@ module.exports = {
   },
   networks: {
     hardhat: {},
-    robinhood: {
+    robinhoodTestnet: {
       url: "https://rpc.testnet.chain.robinhood.com",
       chainId: 46630,
-      accounts: [], // Burner wallet details will be added here in Phase 2
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
+  },
+  etherscan: {
+    apiKey: {
+      robinhoodTestnet: "empty",
+    },
+    customChains: [
+      {
+        network: "robinhoodTestnet",
+        chainId: 46630,
+        urls: {
+          apiURL: "https://explorer.testnet.chain.robinhood.com/api/",
+          browserURL: "https://explorer.testnet.chain.robinhood.com/",
+        },
+      },
+    ],
   },
 };
