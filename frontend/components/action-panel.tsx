@@ -13,6 +13,7 @@ import {
   WAD,
 } from "@/lib/contract";
 import { CHAIN_ID } from "@/lib/chain";
+import type { WalletDiagnostics } from "@/lib/use-wallet";
 import type { Row } from "@/lib/use-basket";
 
 export type ActivityEntry = {
@@ -47,6 +48,7 @@ export function ActionPanel({
   wrongChain,
   onActivity,
   onMutated,
+  onConnect,
 }: {
   rows: Row[];
   basketSymbol: string;
@@ -55,12 +57,16 @@ export function ActionPanel({
   wrongChain: boolean;
   onActivity: (e: ActivityEntry) => void;
   onMutated: (hash: string, ok: boolean) => void;
+  onConnect: () => Promise<
+    { ok: true; steps: WalletDiagnostics[] } | { ok: false; steps: WalletDiagnostics[] }
+  >;
 }) {
   const [tab, setTab] = useState<Tab>("mint");
   const [amount, setAmount] = useState("1");
   const [phase, setPhase] = useState<Phase>("idle");
   const [stepMsg, setStepMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [connecting, setConnecting] = useState(false);
 
   const { address } = useAccount();
   const publicClient = usePublicClient();
@@ -95,6 +101,27 @@ export function ActionPanel({
       return "Contract rejected the call (state guard).";
     }
     return msg.length > 160 ? msg.slice(0, 160) + "…" : msg;
+  }
+
+  async function handleConnect() {
+    setError(null);
+    setConnecting(true);
+    try {
+      const res = await onConnect();
+      if (!res.ok) {
+        const failed = res.steps[res.steps.length - 1];
+        const raw = failed?.detail ?? "Unknown connect error";
+        setError(/UserRejected|4001|rejected/i.test(raw)
+          ? "Connection request rejected in wallet."
+          : raw.length > 180
+            ? raw.slice(0, 180) + "…"
+            : raw);
+      }
+    } catch (e) {
+      setError(friendly(e));
+    } finally {
+      setConnecting(false);
+    }
   }
 
   async function execute() {
@@ -199,7 +226,7 @@ export function ActionPanel({
     phase === "idle";
 
   const ctaLabel = (() => {
-    if (!connected) return "Connect wallet to continue";
+    if (!connected) return connecting ? "Connecting…" : "Connect Wallet";
     if (wrongChain) return "Switch to Robinhood Testnet";
     if (BASKET_ADDRESS === null) return "Contract not deployed";
     if (shares === null || shares === 0n) return "Enter an amount";
@@ -295,8 +322,21 @@ export function ActionPanel({
         </p>
       )}
 
-      {/* CTA */}
-      {wrongChain && connected ? (
+      {/* CTA — disconnected: real connect button; wrong chain: switch; else action */}
+      {!connected ? (
+        <button
+          onClick={handleConnect}
+          disabled={connecting}
+          className="w-full mt-4 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-400 to-lime-300 text-black font-semibold transition-transform enabled:hover:scale-[1.01] enabled:active:scale-[0.99] disabled:opacity-70 flex items-center justify-center gap-2"
+        >
+          {connecting ? (
+            <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+          ) : (
+            <Wallet size={15} aria-hidden="true" />
+          )}
+          <span>{ctaLabel}</span>
+        </button>
+      ) : wrongChain ? (
         <button
           onClick={() => switchChain({ chainId: CHAIN_ID })}
           className="w-full mt-4 py-3.5 rounded-2xl bg-gradient-to-r from-amber-300 to-amber-400 text-black font-semibold transition-transform hover:scale-[1.01] active:scale-[0.99]"
@@ -310,7 +350,6 @@ export function ActionPanel({
           className="w-full mt-4 py-3.5 rounded-2xl font-semibold transition-all duration-300 disabled:cursor-not-allowed bg-gradient-to-r from-emerald-400 to-lime-300 text-black enabled:hover:scale-[1.01] enabled:active:scale-[0.99] enabled:glass-cta disabled:bg-white/5 disabled:text-white/30 disabled:bg-none flex items-center justify-center gap-2"
         >
           {phase === "working" && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
-          {phase === "idle" && !connected && <Wallet size={15} aria-hidden="true" />}
           {phase === "idle" && connected && tab === "mint" && <ShieldCheck size={15} aria-hidden="true" />}
           <span>{ctaLabel}</span>
         </button>

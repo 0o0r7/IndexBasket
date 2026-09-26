@@ -2,18 +2,21 @@
 
 import { useCallback, useState } from "react";
 import { useAccount, useBalance } from "wagmi";
-import { AlertTriangle, ExternalLink, Info, TrendingUp, Wallet } from "lucide-react";
+import { Activity, AlertTriangle, ExternalLink, Info, TrendingUp } from "lucide-react";
 import { BASKET_ADDRESS, fmtToken, fmtUsd, referencePrice, WAD } from "@/lib/contract";
 import { CHAIN_ID, EXPLORER_URL, FAUCET_URL, explorerAddressUrl } from "@/lib/chain";
 import { useBasketData } from "@/lib/use-basket";
+import { useWallet } from "@/lib/use-wallet";
 import { CompositionCard } from "./composition-card";
 import { ActionPanel, type ActivityEntry } from "./action-panel";
 import { ActivityLog } from "./activity-log";
+import { WalletButton } from "./wallet-button";
 
 export function BasketApp() {
   const [activity, setActivity] = useState<ActivityEntry[]>([]);
   const { address, chain, isConnected } = useAccount();
   const wrongChain = isConnected && chain?.id !== CHAIN_ID;
+  const wallet = useWallet();
 
   const { meta, rows, isLoading, refetchAll } = useBasketData();
   const symbol = meta.symbol || "BTRIO";
@@ -72,12 +75,7 @@ export function BasketApp() {
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot" aria-hidden="true" />
               RH Testnet · {CHAIN_ID}
             </span>
-            {isConnected && address ? (
-              <span className="flex items-center gap-2 text-xs px-3.5 py-2 rounded-xl bg-emerald-400/10 border border-emerald-400/30 text-emerald-200 tnum">
-                <Wallet size={13} aria-hidden="true" />
-                {address.slice(0, 6)}…{address.slice(-4)}
-              </span>
-            ) : null}
+            <WalletButton />
           </div>
         </div>
       </header>
@@ -161,6 +159,7 @@ export function BasketApp() {
                   wrongChain={wrongChain}
                   onActivity={pushActivity}
                   onMutated={onMutated}
+                  onConnect={wallet.connect}
                 />
                 <ActivityLog entries={activity} />
               </div>
@@ -184,14 +183,22 @@ export function BasketApp() {
           <p className="text-[11px] text-white/35">
             Robinhood Chain Testnet · Chain ID {CHAIN_ID} · Built with Next.js + wagmi + viem
           </p>
-          <a
-            href={BASKET_ADDRESS ? explorerAddressUrl(BASKET_ADDRESS) : EXPLORER_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-[11px] text-white/45 hover:text-emerald-300 transition-colors"
-          >
-            View contract on explorer <ExternalLink size={11} aria-hidden="true" />
-          </a>
+          <div className="flex items-center gap-4">
+            <a
+              href="/health"
+              className="flex items-center gap-1.5 text-[11px] text-white/45 hover:text-emerald-300 transition-colors"
+            >
+              System health <Activity size={11} aria-hidden="true" />
+            </a>
+            <a
+              href={BASKET_ADDRESS ? explorerAddressUrl(BASKET_ADDRESS) : EXPLORER_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-[11px] text-white/45 hover:text-emerald-300 transition-colors"
+            >
+              View contract on explorer <ExternalLink size={11} aria-hidden="true" />
+            </a>
+          </div>
         </div>
       </footer>
     </div>
