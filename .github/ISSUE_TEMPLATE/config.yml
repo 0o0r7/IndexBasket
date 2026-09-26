@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: In-app troubleshooter
+    url: https://builder-trio-index.vercel.app/health
+    about: 11 live checks (RPC, explorer, contract, wallet connect drill) — run this before filing a frontend/wallet bug.
+  - name: Documentation
+    url: https://github.com/0o0r7/IndexBasket#readme
+    about: Architecture deep-dive, deployment runbook, and the independent verification runbook.
+  - name: Security disclosures
+    url: https://github.com/0o0r7/IndexBasket/security/advisories/new
+    about: Please report vulnerabilities through GitHub Security Advisories, not public issues (see SECURITY.md).
