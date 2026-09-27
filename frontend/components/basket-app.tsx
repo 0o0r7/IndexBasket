@@ -134,7 +134,7 @@ export function BasketApp() {
                 value={isLoading ? "…" : fmtToken(meta.totalSupply, 18, 4)}
               />
               <StatTile label="Reference / share" value={`≈ ${fmtUsd(refSharePrice)}`} sub="illustrative" />
-              <StatTile label="Your ETH" value={eth.data ? Number(eth.data.formatted).toFixed(4) : "—"} />
+              <StatTile label="Your ETH" value={eth.data ? fmtToken(eth.data.value, 18, 4) : "—"} />
             </div>
 
             <div className="grid lg:grid-cols-5 gap-6 items-start">
