@@ -1,6 +1,6 @@
 {
   "name": "index-basket",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "Minimal index basket over real Robinhood Chain testnet faucet Stock Tokens (TSLA/AMZN/NFLX). Deposit-to-mint, burn-to-redeem. No price feed on-chain.",
   "license": "MIT",

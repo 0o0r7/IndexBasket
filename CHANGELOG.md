@@ -4,6 +4,44 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project versions with [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] — 2026-09-27
+
+Toolchain refresh and repository hardening. **No contract, deployment, or
+economic changes** — the basket address, its verified source, and the on-chain
+owner are untouched.
+
+### Changed
+
+- Contracts workspace migrated to **Hardhat 3** (ESM): `defineConfig` +
+  plugin array, `type: "http"` networks, `chainDescriptors` + native
+  Blockscout verification provider replacing `etherscan.customChains`,
+  `@nomicfoundation/hardhat-toolbox-mocha-ethers` replacing the
+  (intentionally dead-end) `hardhat-toolbox@>=6`, dotenv 18.
+  25/25 tests green; a live `hardhat verify blockscout` run re-confirmed the
+  deployed contract's bytecode matches the Hardhat 3 build.
+- Frontend upgraded to **wagmi v3** and **TypeScript 7** (Next 16
+  typechecking passes); the "Your ETH" tile now formats via the shared
+  `fmtToken` helper after wagmi removed pre-formatted balance strings.
+- GitHub Actions bumped to current majors (`checkout@7`, `setup-node@7`,
+  `upload-artifact@7`); all workflows run on Node 22.
+- Dependency refresh across both workspaces — all 12 Dependabot proposals
+  resolved (10 merged, 2 superseded by the migration PRs).
+
+### Security
+
+- `main` protected by an **active branch ruleset**: force-push blocked,
+  deletion blocked, required status checks (`Compile & test contracts`,
+  `Build frontend`), no bypass actors.
+- Vercel project **Root Directory corrected to `frontend/`**: git-triggered
+  production deployments now build the app. (Previously the integration
+  attempted builds from the repo root — they failed harmlessly while the
+  CLI-produced deployment kept serving; a stale-alias risk, now eliminated.)
+
+### Removed
+
+- `scripts/verify-args.js` — the Hardhat 3 verify CLI takes constructor
+  arguments positionally.
+
 ## [1.0.0] — 2026-09-27
 
 First complete, production-hosted release of the basket protocol and its
@@ -21,12 +59,11 @@ frontend on Robinhood Chain Testnet (chain ID 46630).
   blockers, ERC-20 accounting.
 - **Deployment** — `scripts/deploy.js` (deploy → setComponents →
   transferOwnership → on-chain owner confirmation → machine-readable
-  record), `scripts/verify-args.js`, Blockscout source verification via
-  Hardhat custom chain config.
+  record), Blockscout source verification.
 - **CI pipelines** — `deploy.yml` (manual dispatch: compile → test → deploy
   → verify → commit record), `healthcheck.yml` (push/manual/daily: 9 live
   checks), `ci.yml` (push/PR: compile + tests + frontend build).
-- **Frontend** — Next.js 16 + wagmi v2 + viem + Tailwind CSS 4 app:
+- **Frontend** — Next.js 16 + wagmi + viem + Tailwind CSS 4 app:
   Multicall3-batched live reads, approve→mint state machine, redeem with
   over-balance guard, EIP-6963 injected-wallet connect with chain
   switch/add prompts, explicit not-deployed state, labeled illustrative
@@ -63,4 +100,5 @@ frontend on Robinhood Chain Testnet (chain ID 46630).
 - Owner: `0xd57bC3482F32acFD5B52efb723288376aE1b2Fd2` (on-chain confirmed)
 - App: <https://builder-trio-index.vercel.app>
 
+[1.1.0]: https://github.com/0o0r7/IndexBasket/releases/tag/v1.1.0
 [1.0.0]: https://github.com/0o0r7/IndexBasket/releases/tag/v1.0.0
