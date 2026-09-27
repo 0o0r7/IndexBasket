@@ -22,3 +22,6 @@ typechain-types/
 # Next.js build output
 frontend/.next/
 frontend/out/
+
+# Hardhat 3 generated types
+types/
