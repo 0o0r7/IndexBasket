@@ -1,7 +1,12 @@
-require("dotenv").config();
-const fs = require("fs");
-const path = require("path");
-const hre = require("hardhat");
+import "dotenv/config";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { network } from "hardhat";
+
+// Hardhat 3: connect explicitly — this script is testnet-only by design.
+// (Must precede any ethers usage; runs at ESM module top level.)
+const { ethers } = await network.create({ network: "robinhoodTestnet" });
 
 // ---------------------------------------------------------------------------
 // Component composition — REAL Robinhood Chain TESTNET Stock Token addresses.
@@ -24,9 +29,9 @@ const COMPONENT_TOKENS = [
 // Units of each component (raw, 18 decimals) per 1e18 basket shares.
 // Weights: TSLA 0.4 / AMZN 0.35 / NFLX 0.25.
 const UNITS_PER_SHARE = [
-  hre.ethers.parseUnits("0.4", 18),
-  hre.ethers.parseUnits("0.35", 18),
-  hre.ethers.parseUnits("0.25", 18),
+  ethers.parseUnits("0.4", 18),
+  ethers.parseUnits("0.35", 18),
+  ethers.parseUnits("0.25", 18),
 ];
 
 const COMPONENT_META = [
@@ -37,6 +42,8 @@ const COMPONENT_META = [
 
 const BASKET_NAME = "Builder Trio Index";
 const BASKET_SYMBOL = "BTRIO";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function fail(msg) {
   console.error(`FATAL: ${msg}`);
@@ -61,19 +68,19 @@ async function main() {
     fail("MAINWALLET_ADD missing or malformed (expected 0x + 40 hex chars). Refusing to deploy — ownership must end with the main wallet.");
   }
 
-  const [deployer] = await hre.ethers.getSigners();
-  const balance = await hre.ethers.provider.getBalance(deployer.address);
-  const net = await hre.ethers.provider.getNetwork();
+  const [deployer] = await ethers.getSigners();
+  const balance = await ethers.provider.getBalance(deployer.address);
+  const net = await ethers.provider.getNetwork();
   console.log(`DEPLOYER=${deployer.address}`);
   console.log(`DEPLOYER_BALANCE_WEI=${balance}`);
   console.log(`CHAIN_ID=${net.chainId}`);
   if (Number(net.chainId) !== 46630) fail(`Wrong network: expected 46630, got ${net.chainId}`);
-  if (balance < hre.ethers.parseEther("0.001")) {
-    fail(`Burner wallet has ${hre.ethers.formatEther(balance)} ETH — too low for gas. Fund it from https://faucet.testnet.chain.robinhood.com first.`);
+  if (balance < ethers.parseEther("0.001")) {
+    fail(`Burner wallet has ${ethers.formatEther(balance)} ETH — too low for gas. Fund it from https://faucet.testnet.chain.robinhood.com first.`);
   }
 
   // --- 1. Deploy -----------------------------------------------------------
-  const Basket = await hre.ethers.getContractFactory("IndexBasket");
+  const Basket = await ethers.getContractFactory("IndexBasket");
   const basket = await Basket.deploy(BASKET_NAME, BASKET_SYMBOL);
   await basket.waitForDeployment();
   const address = await basket.getAddress();

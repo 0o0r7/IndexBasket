@@ -143,8 +143,7 @@ IndexBasket/
 ├── test/
 │   └── IndexBasket.test.js    # 25-case Hardhat suite
 ├── scripts/
-│   ├── deploy.js              # Deploy → setComponents → transferOwnership → record
-│   └── verify-args.js         # Constructor args for explorer verification
+│   └── deploy.js              # Deploy → setComponents → transferOwnership → record
 ├── deployments/
 │   └── testnet.json           # Machine-readable, written by the deploy run itself
 ├── frontend/
@@ -232,7 +231,7 @@ To deploy from your own machine instead:
 cp .env.example .env            # then fill in a TESTNET burner key — never a mainnet key
 npm install
 npx hardhat run scripts/deploy.js --network robinhoodTestnet
-npx hardhat verify --network robinhoodTestnet <ADDRESS> --constructor-args scripts/verify-args.js
+npx hardhat verify blockscout --network robinhoodTestnet <ADDRESS> "Builder Trio Index" "BTRIO"
 ```
 
 `scripts/deploy.js` refuses to run with a malformed key/address, wrong chain ID, or low gas

@@ -1,6 +1,9 @@
-const { expect } = require("chai");
-const { ethers } = require("hardhat");
-const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
+import { expect } from "chai";
+import { network } from "hardhat";
+
+// Hardhat 3: the connection (and its ethers instance) is created explicitly
+// at module load; ethers v6 API is unchanged from Hardhat 2 usage.
+const { ethers, networkHelpers } = await network.create();
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -81,28 +84,28 @@ async function deployReentrantFixture() {
 describe("IndexBasket", function () {
   describe("Deployment", function () {
     it("sets ERC20 name, symbol and 18 decimals", async function () {
-      const { basket } = await loadFixture(deployBasketFixture);
+      const { basket } = await networkHelpers.loadFixture(deployBasketFixture);
       expect(await basket.name()).to.equal("Builder Trio Index");
       expect(await basket.symbol()).to.equal("BTRIO");
       expect(await basket.decimals()).to.equal(18n);
     });
 
     it("starts uninitialized with zero supply and zero components", async function () {
-      const { basket } = await loadFixture(deployUninitializedFixture);
+      const { basket } = await networkHelpers.loadFixture(deployUninitializedFixture);
       expect(await basket.initialized()).to.equal(false);
       expect(await basket.componentsLength()).to.equal(0n);
       expect(await basket.totalSupply()).to.equal(0n);
     });
 
     it("sets deployer as owner", async function () {
-      const { basket, owner } = await loadFixture(deployBasketFixture);
+      const { basket, owner } = await networkHelpers.loadFixture(deployBasketFixture);
       expect(await basket.owner()).to.equal(owner.address);
     });
   });
 
   describe("setComponents", function () {
     it("stores composition and emits ComponentsSet", async function () {
-      const { basket, tsla, amzn, nflx } = await loadFixture(deployUninitializedFixture);
+      const { basket, tsla, amzn, nflx } = await networkHelpers.loadFixture(deployUninitializedFixture);
       const tokens = [tsla.target, amzn.target, nflx.target];
       const units = [W_TSLA, W_AMZN, W_NFLX];
 
@@ -125,27 +128,27 @@ describe("IndexBasket", function () {
     });
 
     it("reverts on second call (AlreadyInitialized)", async function () {
-      const { basket } = await loadFixture(deployUninitializedFixture);
+      const { basket } = await networkHelpers.loadFixture(deployUninitializedFixture);
       await basket.setComponents([ethers.ZeroAddress], [1n]);
       await expect(basket.setComponents([ethers.ZeroAddress], [1n]))
         .to.be.revertedWithCustomError(basket, "AlreadyInitialized");
     });
 
     it("reverts on length mismatch (LengthMismatch)", async function () {
-      const { basket, tsla, amzn } = await loadFixture(deployUninitializedFixture);
+      const { basket, tsla, amzn } = await networkHelpers.loadFixture(deployUninitializedFixture);
       await expect(
         basket.setComponents([tsla.target, amzn.target], [W_TSLA])
       ).to.be.revertedWithCustomError(basket, "LengthMismatch");
     });
 
     it("reverts on empty arrays (EmptyComponents)", async function () {
-      const { basket } = await loadFixture(deployUninitializedFixture);
+      const { basket } = await networkHelpers.loadFixture(deployUninitializedFixture);
       await expect(basket.setComponents([], []))
         .to.be.revertedWithCustomError(basket, "EmptyComponents");
     });
 
     it("reverts when called by non-owner", async function () {
-      const { basket, user1, tsla } = await loadFixture(deployUninitializedFixture);
+      const { basket, user1, tsla } = await networkHelpers.loadFixture(deployUninitializedFixture);
       await expect(
         basket.connect(user1).setComponents([tsla.target], [W_TSLA])
       ).to.be.revertedWithCustomError(basket, "OwnableUnauthorizedAccount").withArgs(user1.address);
@@ -154,7 +157,7 @@ describe("IndexBasket", function () {
 
   describe("mint", function () {
     it("pulls exact weighted amounts in, mints shares, emits Minted", async function () {
-      const { basket, user1, tsla, amzn, nflx } = await loadFixture(deployBasketFixture);
+      const { basket, user1, tsla, amzn, nflx } = await networkHelpers.loadFixture(deployBasketFixture);
       const shares = ethers.parseUnits("1", 18);
 
       for (const t of [tsla, amzn, nflx]) {
@@ -181,7 +184,7 @@ describe("IndexBasket", function () {
     });
 
     it("rounds component amounts UP on the way in (protocol keeps the dust)", async function () {
-      const { basket, user1, tsla, amzn, nflx } = await loadFixture(deployBasketFixture);
+      const { basket, user1, tsla, amzn, nflx } = await networkHelpers.loadFixture(deployBasketFixture);
       // 0.500000000000000001 shares — deliberately not divisible by the weights
       const oddShares = ethers.parseUnits("0.5", 18) + 1n;
 
@@ -207,7 +210,7 @@ describe("IndexBasket", function () {
     });
 
     it("accumulates across multiple mints and multiple users", async function () {
-      const { basket, user1, user2, tsla, amzn, nflx } = await loadFixture(deployBasketFixture);
+      const { basket, user1, user2, tsla, amzn, nflx } = await networkHelpers.loadFixture(deployBasketFixture);
       for (const t of [tsla, amzn, nflx]) {
         await t.connect(user1).approve(basket.target, ethers.MaxUint256);
         await t.connect(user2).approve(basket.target, ethers.MaxUint256);
@@ -232,19 +235,19 @@ describe("IndexBasket", function () {
     });
 
     it("reverts on mint of zero shares (ZeroShares)", async function () {
-      const { basket, user1 } = await loadFixture(deployBasketFixture);
+      const { basket, user1 } = await networkHelpers.loadFixture(deployBasketFixture);
       await expect(basket.connect(user1).mint(0n))
         .to.be.revertedWithCustomError(basket, "ZeroShares");
     });
 
     it("reverts when called before setComponents (NotInitialized)", async function () {
-      const { basket, user1 } = await loadFixture(deployUninitializedFixture);
+      const { basket, user1 } = await networkHelpers.loadFixture(deployUninitializedFixture);
       await expect(basket.connect(user1).mint(1n))
         .to.be.revertedWithCustomError(basket, "NotInitialized");
     });
 
     it("reverts on insufficient allowance", async function () {
-      const { basket, user1, tsla } = await loadFixture(deployBasketFixture);
+      const { basket, user1, tsla } = await networkHelpers.loadFixture(deployBasketFixture);
       // no approval at all -> allowance 0
       await expect(basket.connect(user1).mint(ethers.parseUnits("1", 18)))
         .to.be.revertedWithCustomError(tsla, "ERC20InsufficientAllowance")
@@ -252,7 +255,7 @@ describe("IndexBasket", function () {
     });
 
     it("reverts on insufficient token balance even with allowance", async function () {
-      const { basket, user1, user2, tsla, amzn, nflx } = await loadFixture(deployBasketFixture);
+      const { basket, user1, user2, tsla, amzn, nflx } = await networkHelpers.loadFixture(deployBasketFixture);
       for (const t of [tsla, amzn, nflx]) {
         await t.connect(user2).approve(basket.target, ethers.MaxUint256);
       }
@@ -270,7 +273,7 @@ describe("IndexBasket", function () {
 
   describe("redeem", function () {
     it("burns shares and returns exact weighted amounts, emits Redeemed", async function () {
-      const { basket, user1, tsla, amzn, nflx } = await loadFixture(deployBasketFixture);
+      const { basket, user1, tsla, amzn, nflx } = await networkHelpers.loadFixture(deployBasketFixture);
       const shares = ethers.parseUnits("1", 18);
       for (const t of [tsla, amzn, nflx]) {
         await t.connect(user1).approve(basket.target, ethers.MaxUint256);
@@ -294,7 +297,7 @@ describe("IndexBasket", function () {
     });
 
     it("rounds component amounts DOWN on the way out (protocol keeps the dust)", async function () {
-      const { basket, user1, tsla, amzn, nflx } = await loadFixture(deployBasketFixture);
+      const { basket, user1, tsla, amzn, nflx } = await networkHelpers.loadFixture(deployBasketFixture);
       const oddShares = ethers.parseUnits("0.5", 18) + 1n;
       for (const t of [tsla, amzn, nflx]) {
         await t.connect(user1).approve(basket.target, ethers.MaxUint256);
@@ -318,7 +321,7 @@ describe("IndexBasket", function () {
     });
 
     it("redeems proportionally across users (share of collateral is respected)", async function () {
-      const { basket, user1, user2, tsla, amzn, nflx } = await loadFixture(deployBasketFixture);
+      const { basket, user1, user2, tsla, amzn, nflx } = await networkHelpers.loadFixture(deployBasketFixture);
       for (const t of [tsla, amzn, nflx]) {
         await t.connect(user1).approve(basket.target, ethers.MaxUint256);
         await t.connect(user2).approve(basket.target, ethers.MaxUint256);
@@ -349,19 +352,19 @@ describe("IndexBasket", function () {
     });
 
     it("reverts on redeem of zero shares (ZeroShares)", async function () {
-      const { basket, user1 } = await loadFixture(deployBasketFixture);
+      const { basket, user1 } = await networkHelpers.loadFixture(deployBasketFixture);
       await expect(basket.connect(user1).redeem(0n))
         .to.be.revertedWithCustomError(basket, "ZeroShares");
     });
 
     it("reverts when redeeming before initialization (NotInitialized)", async function () {
-      const { basket, user1 } = await loadFixture(deployUninitializedFixture);
+      const { basket, user1 } = await networkHelpers.loadFixture(deployUninitializedFixture);
       await expect(basket.connect(user1).redeem(1n))
         .to.be.revertedWithCustomError(basket, "NotInitialized");
     });
 
     it("reverts when burning more shares than owned (ERC20InsufficientBalance)", async function () {
-      const { basket, user1 } = await loadFixture(deployBasketFixture);
+      const { basket, user1 } = await networkHelpers.loadFixture(deployBasketFixture);
       await expect(
         basket.connect(user1).redeem(ethers.parseUnits("1", 18))
       ).to.be.revertedWithCustomError(basket, "ERC20InsufficientBalance")
@@ -371,7 +374,7 @@ describe("IndexBasket", function () {
 
   describe("Reentrancy", function () {
     it("benign single-component mint works (proves the revert below comes from the reentry, not the token)", async function () {
-      const { basket, rnt, user1 } = await loadFixture(deployReentrantFixture);
+      const { basket, rnt, user1 } = await networkHelpers.loadFixture(deployReentrantFixture);
       await rnt.connect(user1).approve(basket.target, ethers.MaxUint256);
       await basket.connect(user1).mint(ethers.parseUnits("2", 18));
       expect(await basket.balanceOf(user1.address)).to.equal(ethers.parseUnits("2", 18));
@@ -379,7 +382,7 @@ describe("IndexBasket", function () {
     });
 
     it("reentrant mint via transferFrom is blocked (ReentrancyGuardReentrantCall), state intact", async function () {
-      const { basket, rnt, user1 } = await loadFixture(deployReentrantFixture);
+      const { basket, rnt, user1 } = await networkHelpers.loadFixture(deployReentrantFixture);
       // establish a clean baseline position first
       await rnt.connect(user1).approve(basket.target, ethers.MaxUint256);
       await basket.connect(user1).mint(ethers.parseUnits("2", 18));
@@ -399,7 +402,7 @@ describe("IndexBasket", function () {
     });
 
     it("reentrant redeem via transfer is blocked (ReentrancyGuardReentrantCall), state intact", async function () {
-      const { basket, rnt, user1 } = await loadFixture(deployReentrantFixture);
+      const { basket, rnt, user1 } = await networkHelpers.loadFixture(deployReentrantFixture);
       await rnt.connect(user1).approve(basket.target, ethers.MaxUint256);
       await basket.connect(user1).mint(ethers.parseUnits("2", 18));
       const sharesBefore = await basket.balanceOf(user1.address);
@@ -420,7 +423,7 @@ describe("IndexBasket", function () {
 
   describe("Basket share token", function () {
     it("shares are transferable like any ERC-20", async function () {
-      const { basket, user1, user2, tsla, amzn, nflx } = await loadFixture(deployBasketFixture);
+      const { basket, user1, user2, tsla, amzn, nflx } = await networkHelpers.loadFixture(deployBasketFixture);
       for (const t of [tsla, amzn, nflx]) {
         await t.connect(user1).approve(basket.target, ethers.MaxUint256);
       }

@@ -26,7 +26,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -49,7 +49,7 @@ jobs:
           ADDRESS=$(cat deployments/address.txt | tr -d '[:space:]')
           echo "Verifying $ADDRESS"
           for i in 1 2 3; do
-            if npx hardhat verify --network robinhoodTestnet "$ADDRESS" --constructor-args scripts/verify-args.js; then
+            if npx hardhat verify blockscout --network robinhoodTestnet "$ADDRESS" "Builder Trio Index" "BTRIO"; then
               echo "VERIFY_OK=true"
               exit 0
             fi
