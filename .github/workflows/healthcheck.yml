@@ -21,7 +21,11 @@ jobs:
       - name: Install frontend deps (viem for healthcheck)
         run: npm ci --prefix frontend
       - name: Run healthcheck (real RPC / contract / explorer / site calls)
-        run: node frontend/scripts/healthcheck.mjs | tee healthcheck.txt
+        # pipefail: without it the step's exit status is tee's, so a failing
+        # check (healthcheck.mjs exits 1) would still pass the job.
+        run: |
+          set -o pipefail
+          node frontend/scripts/healthcheck.mjs | tee healthcheck.txt
       - name: Append job summary
         if: always()
         run: |
